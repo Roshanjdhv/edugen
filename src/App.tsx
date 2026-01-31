@@ -13,32 +13,11 @@ import ClassroomDetails from './pages/teacher/ClassroomDetails';
 import AdminDashboard from './pages/admin/Dashboard';
 import StudentClassroomView from './pages/student/ClassroomView';
 import TakeQuiz from './pages/student/TakeQuiz';
+import LandingPage from './pages/LandingPage';
 
 
 
 // const AdminDashboard = () => <div>Admin Dashboard Setup</div>; // Removed placeholder
-
-import { useAuth } from './contexts/AuthContext';
-
-function HomeRedirect() {
-  const { user, profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (profile?.role === 'teacher') return <Navigate to="/teacher" replace />;
-  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
-  return <Navigate to="/student" replace />;
-}
 
 function App() {
   return (
@@ -50,8 +29,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Role-based root redirect */}
-          <Route path="/" element={<HomeRedirect />} />
+          {/* Landing page - always shown at root */}
+          <Route path="/" element={<LandingPage />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
