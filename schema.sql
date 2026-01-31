@@ -159,8 +159,10 @@ create table public.questions (
   id uuid default uuid_generate_v4() primary key,
   quiz_id uuid references public.quizzes(id) on delete cascade not null,
   question_text text not null,
-  options jsonb not null, -- Array of strings
-  correct_option integer not null, -- Index of correct option
+  question_type text check (question_type in ('mcq', 'short_answer')) default 'mcq',
+  options jsonb, -- Nullable for short_answer
+  correct_option integer, -- Nullable for short_answer
+  correct_answer text, -- For short_answer
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -190,3 +192,65 @@ create policy "Students can view questions of published quizzes"
       )
     )
   );
+
+-- QUIZ ATTEMPTS
+create table public.quiz_attempts (
+  id uuid default uuid_generate_v4() primary key,
+  quiz_id uuid references public.quizzes(id) on delete cascade not null,
+  student_id uuid references public.profiles(id) not null,
+  score integer,
+  completed_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.quiz_attempts enable row level security;
+
+create policy "Students can view own attempts"
+  on quiz_attempts for select
+  using ( student_id = auth.uid() );
+
+create policy "Students can insert attempts"
+  on quiz_attempts for insert
+  with check ( student_id = auth.uid() );
+
+create policy "Teachers can view attempts of their quizzes"
+  on quiz_attempts for select
+  using (
+    exists (
+      select 1 from quizzes
+      where quizzes.id = quiz_attempts.quiz_id
+      and quizzes.created_by = auth.uid()
+    )
+  );
+
+-- QUIZ ANSWERS
+create table public.quiz_answers (
+  id uuid default uuid_generate_v4() primary key,
+  attempt_id uuid references public.quiz_attempts(id) on delete cascade not null,
+  question_id uuid references public.questions(id) on delete cascade not null,
+  answer text, -- Index for MCQ or text for short_answer
+  is_correct boolean
+);
+
+alter table public.quiz_answers enable row level security;
+
+create policy "Teachers can view answers"
+  on quiz_answers for select
+  using (
+    exists (
+      select 1 from quiz_attempts
+      join quizzes on quizzes.id = quiz_attempts.quiz_id
+      where quiz_attempts.id = quiz_answers.attempt_id
+      and quizzes.created_by = auth.uid()
+    )
+  );
+
+create policy "Students can view own answers"
+  on quiz_answers for select
+  using (
+    exists (
+      select 1 from quiz_attempts
+      where quiz_attempts.id = quiz_answers.attempt_id
+      and quiz_attempts.student_id = auth.uid()
+    )
+  );
+

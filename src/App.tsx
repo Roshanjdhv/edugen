@@ -11,6 +11,10 @@ import TeacherDashboard from './pages/teacher/Dashboard';
 import CreateClassroom from './pages/teacher/CreateClassroom';
 import ClassroomDetails from './pages/teacher/ClassroomDetails';
 import AdminDashboard from './pages/admin/Dashboard';
+import StudentClassroomView from './pages/student/ClassroomView';
+import TakeQuiz from './pages/student/TakeQuiz';
+
+
 
 // const AdminDashboard = () => <div>Admin Dashboard Setup</div>; // Removed placeholder
 
@@ -56,7 +60,8 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/student/classrooms" element={<StudentClassrooms />} />
-                {/* <Route path="/student/classrooms/:id" element={<StudentClassroomView />} /> */}
+                <Route path="/student/classrooms/:id" element={<StudentClassroomView />} />
+                <Route path="/student/quizzes/:id" element={<TakeQuiz />} />
               </Route>
 
               {/* Teacher Routes */}
