@@ -146,6 +146,21 @@ export default function Layout() {
                         {isStudent && (
                             <>
                                 <NavLink
+                                    to="/student/classrooms"
+                                    onClick={closeSidebar}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-md font-medium"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        )
+                                    }
+                                >
+                                    <BookOpen className="w-5 h-5" />
+                                    <span>My Courses</span>
+                                </NavLink>
+                                <NavLink
                                     to="/student/assignments"
                                     onClick={closeSidebar}
                                     className={({ isActive }) =>

@@ -3,6 +3,7 @@ import { BookOpen, FileText, CheckCircle, TrendingUp, ChevronRight } from 'lucid
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
+import { cn } from '../../lib/utils';
 
 export default function StudentDashboard() {
     const { profile } = useAuth();
@@ -14,6 +15,7 @@ export default function StudentDashboard() {
     });
     const [coursePerformance, setCoursePerformance] = useState<any[]>([]);
     const [recentAssignments, setRecentAssignments] = useState<any[]>([]);
+    const [enrolledClassrooms, setEnrolledClassrooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -106,6 +108,7 @@ export default function StudentDashboard() {
             }));
 
             setCoursePerformance(performance);
+            setEnrolledClassrooms(classroomData || []);
 
         } catch (error) {
             console.error('Error loading dashboard:', error);
@@ -211,6 +214,58 @@ export default function StudentDashboard() {
                             ></div>
                         </div>
                     </div>
+                </div>
+
+                {/* My Courses Section */}
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="w-6 h-6 text-blue-600" />
+                            <h2 className="text-xl font-bold text-slate-900">My Courses</h2>
+                        </div>
+                        <Link to="/student/classrooms" className="text-sm text-blue-600 hover:text-blue-700 font-bold">
+                            View All Courses
+                        </Link>
+                    </div>
+
+                    {loading ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="bg-white rounded-xl h-48 animate-pulse border border-slate-200"></div>
+                            ))}
+                        </div>
+                    ) : enrolledClassrooms.length === 0 ? (
+                        <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center">
+                            <p className="text-slate-500 font-medium mb-4">You haven't joined any classrooms yet.</p>
+                            <Link to="/student/classrooms" className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all">
+                                Join a Class
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {enrolledClassrooms.map((course, index) => (
+                                <div key={course.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all group">
+                                    <div className={cn(
+                                        "h-24 p-6 flex items-end relative overflow-hidden",
+                                        ["bg-indigo-600", "bg-pink-600", "bg-teal-600", "bg-blue-600", "bg-orange-600"][index % 5]
+                                    )}>
+                                        <div className="absolute top-4 right-4 w-16 h-16 bg-white/10 rounded-full blur-xl animate-pulse"></div>
+                                        <h3 className="text-white font-bold text-lg relative z-10">{course.name}</h3>
+                                    </div>
+                                    <div className="p-5">
+                                        <p className="text-sm text-slate-500 line-clamp-1 mb-4">{course.description || 'No description available.'}</p>
+                                        <Link
+                                            to={`/student/classrooms/${course.id}`}
+                                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-bold text-sm"
+                                        >
+                                            Continue Learning
+                                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
