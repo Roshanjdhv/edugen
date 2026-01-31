@@ -114,7 +114,7 @@ export default function StudentDashboard() {
 
             const performance = (classroomData || []).map(c => ({
                 name: c.name,
-                progress: Math.floor(Math.random() * 40) + 60, // Placeholder calculation for individual course progress
+                progress: 0, // Set to 0 initially, actual progress tracking requires per-course metrics
                 color: 'bg-blue-500'
             }));
 
@@ -163,8 +163,8 @@ export default function StudentDashboard() {
                         </button>
                         <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
                             <div className="text-right">
-                                <div className="text-sm font-semibold text-slate-900">{profile?.full_name || 'Alex Johnson'}</div>
-                                <div className="text-xs text-slate-500">ID: 2024/0472</div>
+                                <div className="text-sm font-semibold text-slate-900">{profile?.full_name}</div>
+                                <div className="text-xs text-slate-500">ID: #{profile?.id?.slice(0, 8)}</div>
                             </div>
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 {profile?.full_name?.[0] || 'A'}

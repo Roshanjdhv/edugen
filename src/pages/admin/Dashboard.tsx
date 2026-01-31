@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Users, UserCheck, Shield, Trash2, AlertCircle } from 'lucide-react';
+import { Users, UserCheck, Shield, Trash2, AlertCircle, BookOpen, FileText, LayoutDashboard, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function AdminDashboard() {
@@ -8,9 +8,14 @@ export default function AdminDashboard() {
         activeTeachers: 0,
         activeStudents: 0,
         totalClassrooms: 0,
-        totalUsers: 0
+        totalUsers: 0,
+        totalMaterials: 0,
+        totalQuizzes: 0,
+        totalAnnouncements: 0,
+        totalSubmissions: 0
     });
     const [users, setUsers] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -21,16 +26,35 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            const { count: teachers } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher');
-            const { count: students } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
-            const { count: classrooms } = await supabase.from('classrooms').select('*', { count: 'exact', head: true });
-            const { count: total } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+            const [
+                { count: teachers },
+                { count: students },
+                { count: classrooms },
+                { count: total },
+                { count: materials },
+                { count: quizzes },
+                { count: announcements },
+                { count: attempts }
+            ] = await Promise.all([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
+                supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
+                supabase.from('classrooms').select('*', { count: 'exact', head: true }),
+                supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                supabase.from('materials').select('*', { count: 'exact', head: true }),
+                supabase.from('quizzes').select('*', { count: 'exact', head: true }),
+                supabase.from('announcements').select('*', { count: 'exact', head: true }),
+                supabase.from('quiz_attempts').select('*', { count: 'exact', head: true }),
+            ]);
 
             setStats({
                 activeTeachers: teachers || 0,
                 activeStudents: students || 0,
                 totalClassrooms: classrooms || 0,
-                totalUsers: total || 0
+                totalUsers: total || 0,
+                totalMaterials: materials || 0,
+                totalQuizzes: quizzes || 0,
+                totalAnnouncements: announcements || 0,
+                totalSubmissions: attempts || 0
             });
         } catch (e) {
             console.error(e);
@@ -89,7 +113,7 @@ export default function AdminDashboard() {
                     value={stats.activeStudents}
                     icon={Users}
                     color="blue"
-                    description="Successfully enrolled students"
+                    description="Registered student accounts"
                 />
                 <StatCard
                     label="Total Teachers"
@@ -105,6 +129,41 @@ export default function AdminDashboard() {
                     color="indigo"
                     description="Combined user base"
                 />
+                <StatCard
+                    label="Active Classrooms"
+                    value={stats.totalClassrooms}
+                    icon={LayoutDashboard}
+                    color="cyan"
+                    description="Total created rooms"
+                />
+                <StatCard
+                    label="Study Materials"
+                    value={stats.totalMaterials}
+                    icon={BookOpen}
+                    color="emerald"
+                    description="Resources uploaded"
+                />
+                <StatCard
+                    label="Quizzes Setup"
+                    value={stats.totalQuizzes}
+                    icon={FileText}
+                    color="amber"
+                    description="Assessments created"
+                />
+                <StatCard
+                    label="Student Submissions"
+                    value={stats.totalSubmissions}
+                    icon={Send}
+                    color="rose"
+                    description="Completed quiz attempts"
+                />
+                <StatCard
+                    label="System Updates"
+                    value={stats.totalAnnouncements}
+                    icon={FileText}
+                    color="slate"
+                    description="Global announcements"
+                />
             </div>
 
             {/* Users Table */}
@@ -118,6 +177,8 @@ export default function AdminDashboard() {
                         <input
                             type="text"
                             placeholder="Search users..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-2.5 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all w-full md:w-64"
                         />
                     </div>
@@ -154,50 +215,55 @@ export default function AdminDashboard() {
                                     </td>
                                 </tr>
                             ) : (
-                                users.map(user => (
-                                    <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500 text-lg uppercase transition-transform group-hover:scale-110">
-                                                    {user.full_name?.[0] || '?'}
+                                users
+                                    .filter(user =>
+                                        user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+                                    )
+                                    .map(user => (
+                                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500 text-lg uppercase transition-transform group-hover:scale-110">
+                                                        {user.full_name?.[0] || '?'}
+                                                    </div>
+                                                    <span className="font-black text-slate-900">{user.full_name}</span>
                                                 </div>
-                                                <span className="font-black text-slate-900">{user.full_name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center w-fit gap-2 ${user.role === 'teacher' ? 'bg-purple-50 text-purple-600' :
-                                                user.role === 'admin' ? 'bg-red-50 text-red-600' :
-                                                    'bg-blue-50 text-blue-600'
-                                                }`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${user.role === 'teacher' ? 'bg-purple-600' :
-                                                    user.role === 'admin' ? 'bg-red-600' :
-                                                        'bg-blue-600'
-                                                    }`} />
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-5 font-bold text-slate-500">{user.email}</td>
-                                        <td className="px-8 py-5 font-bold text-slate-400 text-sm">
-                                            {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex justify-center">
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.id, user.full_name)}
-                                                    disabled={deletingId === user.id}
-                                                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all disabled:opacity-50"
-                                                    title="Permanently Remove Account"
-                                                >
-                                                    {deletingId === user.id ? (
-                                                        <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                                                    ) : (
-                                                        <Trash2 className="w-5 h-5" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center w-fit gap-2 ${user.role === 'teacher' ? 'bg-purple-50 text-purple-600' :
+                                                    user.role === 'admin' ? 'bg-red-50 text-red-600' :
+                                                        'bg-blue-50 text-blue-600'
+                                                    }`}>
+                                                    <div className={`w-1.5 h-1.5 rounded-full ${user.role === 'teacher' ? 'bg-purple-600' :
+                                                        user.role === 'admin' ? 'bg-red-600' :
+                                                            'bg-blue-600'
+                                                        }`} />
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5 font-bold text-slate-500">{user.email}</td>
+                                            <td className="px-8 py-5 font-bold text-slate-400 text-sm">
+                                                {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.id, user.full_name)}
+                                                        disabled={deletingId === user.id}
+                                                        className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all disabled:opacity-50"
+                                                        title="Permanently Remove Account"
+                                                    >
+                                                        {deletingId === user.id ? (
+                                                            <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="w-5 h-5" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
                             )}
                         </tbody>
                     </table>
@@ -212,7 +278,11 @@ function StatCard({ label, value, icon: Icon, color, description }: any) {
         blue: 'text-blue-600 bg-blue-50',
         purple: 'text-purple-600 bg-purple-50',
         cyan: 'text-cyan-600 bg-cyan-50',
-        indigo: 'text-indigo-600 bg-indigo-50'
+        indigo: 'text-indigo-600 bg-indigo-50',
+        emerald: 'text-emerald-600 bg-emerald-50',
+        amber: 'text-amber-600 bg-amber-50',
+        rose: 'text-rose-600 bg-rose-50',
+        slate: 'text-slate-600 bg-slate-50'
     };
 
     return (

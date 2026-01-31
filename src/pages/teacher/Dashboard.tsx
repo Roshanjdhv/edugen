@@ -30,12 +30,18 @@ export default function TeacherDashboard() {
             // We'll stick to simple fetch first
             const { data, error } = await supabase
                 .from('classrooms')
-                .select('*')
+                .select('*, classroom_students(count)')
                 .eq('created_by', user.id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setClassrooms(data || []);
+
+            const classroomsWithCounts = data?.map(room => ({
+                ...room,
+                student_count: room.classroom_students?.[0]?.count || 0
+            })) || [];
+
+            setClassrooms(classroomsWithCounts);
         } catch (error) {
             console.error('Error fetching classrooms:', error);
         } finally {
@@ -112,7 +118,7 @@ export default function TeacherDashboard() {
                             <div className="p-4 bg-slate-50 flex justify-between items-center text-sm">
                                 <div className="flex items-center gap-2 text-slate-500">
                                     <Users className="w-4 h-4" />
-                                    <span>0 Students</span> {/* Placeholder count */}
+                                    <span>{room.student_count || 0} Students</span>
                                 </div>
                                 <Link to={`/teacher/classrooms/${room.id}`} className="text-blue-600 font-medium hover:underline">
                                     Manage &rarr;

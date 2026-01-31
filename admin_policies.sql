@@ -18,7 +18,36 @@ CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
   USING (true);
 
--- Optional: Create a dedicated admin profile if it doesn't exist
--- Note: This only creates the profile record. You still need to sign up
--- with email admin@edugen.com and password edugen2026 once in the app (then role will be admin)
--- OR manually insert into auth.users (not recommended via SQL editor usually)
+-- Global access for admins to other tables for analytics
+DO $$ 
+BEGIN
+    -- Classrooms
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all classrooms') THEN
+        CREATE POLICY "Admins can view all classrooms" ON classrooms FOR SELECT
+        USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    END IF;
+
+    -- Materials
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all materials') THEN
+        CREATE POLICY "Admins can view all materials" ON materials FOR SELECT
+        USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    END IF;
+
+    -- Announcements
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all announcements') THEN
+        CREATE POLICY "Admins can view all announcements" ON announcements FOR SELECT
+        USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    END IF;
+
+    -- Quizzes
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all quizzes') THEN
+        CREATE POLICY "Admins can view all quizzes" ON quizzes FOR SELECT
+        USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    END IF;
+
+    -- Quiz Attempts
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins can view all quiz_attempts') THEN
+        CREATE POLICY "Admins can view all quiz_attempts" ON quiz_attempts FOR SELECT
+        USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+    END IF;
+END $$;
