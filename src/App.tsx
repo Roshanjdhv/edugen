@@ -8,10 +8,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import StudentDashboard from './pages/student/Dashboard';
 import StudentProgress from './pages/student/Progress';
 import StudentClassrooms from './pages/student/Classrooms';
+import StudentAssignments from './pages/student/Assignments';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import CreateClassroom from './pages/teacher/CreateClassroom';
 import ClassroomDetails from './pages/teacher/ClassroomDetails';
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminLogin from './pages/admin/AdminLogin';
 import StudentClassroomView from './pages/student/ClassroomView';
 import TakeQuiz from './pages/student/TakeQuiz';
 import LandingPage from './pages/LandingPage';
@@ -29,6 +31,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Landing page - always shown at root */}
           <Route path="/" element={<LandingPage />} />
@@ -40,6 +43,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/student/classrooms" element={<StudentClassrooms />} />
+                <Route path="/student/assignments" element={<StudentAssignments />} />
                 <Route path="/student/progress" element={<StudentProgress />} />
                 <Route path="/student/classrooms/:id" element={<StudentClassroomView />} />
                 <Route path="/student/quizzes/:id" element={<TakeQuiz />} />

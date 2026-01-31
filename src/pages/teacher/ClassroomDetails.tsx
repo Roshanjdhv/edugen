@@ -5,6 +5,7 @@ import { Upload, FileText, Video, ClipboardList, Megaphone, Users, Plus, Timer, 
 import UploadMaterialModal from '../../components/UploadMaterialModal';
 import CreateQuizModal from '../../components/CreateQuizModal';
 import CreateAnnouncementModal from '../../components/CreateAnnouncementModal';
+import CreateAssignmentModal from '../../components/CreateAssignmentModal';
 import StudentPerformance from '../../pages/teacher/StudentPerformance';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +21,7 @@ export default function ClassroomDetails() {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isCreateQuizModalOpen, setIsCreateQuizModalOpen] = useState(false);
     const [isCreateAnnouncementModalOpen, setIsCreateAnnouncementModalOpen] = useState(false);
+    const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
 
 
@@ -31,6 +33,7 @@ export default function ClassroomDetails() {
     const [newComment, setNewComment] = useState<Record<string, string>>({});
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [students, setStudents] = useState<any[]>([]);
+    const [assignments, setAssignments] = useState<any[]>([]);
 
 
     useEffect(() => {
@@ -40,6 +43,7 @@ export default function ClassroomDetails() {
             fetchQuizzes();
             fetchAnnouncements();
             fetchStudents();
+            fetchAssignments();
         }
     }, [id]);
 
@@ -97,15 +101,37 @@ export default function ClassroomDetails() {
                 .select('*, profiles(full_name)')
                 .eq('classroom_id', id)
                 .order('created_at', { ascending: false });
-
-            if (!error && data) {
-                setAnnouncements(data);
-                data.forEach(a => fetchComments(a.id));
-            }
+            if (!error) setAnnouncements(data || []);
         } catch (e) {
             console.error(e);
         }
-    }
+    };
+
+    const fetchAssignments = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('assignments')
+                .select('*')
+                .eq('classroom_id', id)
+                .order('created_at', { ascending: false });
+            if (!error) setAssignments(data || []);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const deleteAssignment = async (assignmentId: string) => {
+        if (!confirm('Are you sure you want to delete this assignment?')) return;
+        try {
+            const { error } = await supabase.from('assignments').delete().eq('id', assignmentId);
+            if (error) throw error;
+            toast.success('Assignment deleted');
+            fetchAssignments();
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
 
     const fetchComments = async (announcementId: string) => {
         try {
@@ -227,9 +253,10 @@ export default function ClassroomDetails() {
                     { id: 'materials', label: 'Study Materials', icon: FileText },
                     { id: 'lectures', label: 'Recorded Lectures', icon: Video },
                     { id: 'quizzes', label: 'Quizzes', icon: ClipboardList },
+                    { id: 'assignments', label: 'Assignments', icon: ClipboardList },
                     { id: 'announcements', label: 'Announcements', icon: Megaphone },
                     { id: 'students', label: 'Students', icon: Users },
-                    { id: 'performance', label: 'Performance', icon: Users }, // Using Users icon as placeholder or maybe ACTIVITY if I imported it
+                    { id: 'performance', label: 'Performance', icon: Activity },
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -386,6 +413,65 @@ export default function ClassroomDetails() {
                     </div>
                 )}
 
+
+                {activeTab === 'assignments' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-slate-900">Assignments</h2>
+                            <button
+                                onClick={() => setIsCreateAssignmentModalOpen(true)}
+                                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Post Assignment
+                            </button>
+                        </div>
+
+                        {assignments.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                                <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                                <p className="text-slate-500">No assignments posted yet.</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4">
+                                {assignments.map(a => (
+                                    <div key={a.id} className="bg-white p-6 rounded-xl border border-slate-200 flex items-center justify-between group hover:border-blue-300 transition-colors">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="font-bold text-slate-900">{a.title}</h3>
+                                                {a.due_date && (
+                                                    <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                                                        Due: {new Date(a.due_date).toLocaleDateString()}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-slate-600 line-clamp-2">{a.content}</p>
+                                            <div className="mt-2 flex items-center gap-4 text-xs text-slate-400">
+                                                <span className="flex items-center gap-1">
+                                                    <Timer className="w-3 h-3" />
+                                                    Posted {new Date(a.created_at).toLocaleDateString()}
+                                                </span>
+                                                {a.file_url && (
+                                                    <a href={a.file_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">
+                                                        Download Attachment
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => deleteAssignment(a.id)}
+                                                className="p-2 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {activeTab === 'announcements' && (
                     <div className="space-y-6">
@@ -754,6 +840,32 @@ export default function ClassroomDetails() {
                     </div>
                 </div>
             )}
+            {/* Modals */}
+            <UploadMaterialModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                classroomId={id!}
+                onSuccess={fetchMaterials}
+            />
+            <CreateQuizModal
+                isOpen={isCreateQuizModalOpen}
+                onClose={() => setIsCreateQuizModalOpen(false)}
+                classroomId={id!}
+                onSuccess={fetchQuizzes}
+            />
+            <CreateAnnouncementModal
+                isOpen={isCreateAnnouncementModalOpen}
+                onClose={() => setIsCreateAnnouncementModalOpen(false)}
+                classroomId={id!}
+                onSuccess={fetchAnnouncements}
+            />
+            <CreateAssignmentModal
+                isOpen={isCreateAssignmentModalOpen}
+                onClose={() => setIsCreateAssignmentModalOpen(false)}
+                classroomId={id!}
+                onSuccess={fetchAssignments}
+            />
         </div>
     );
 }
+

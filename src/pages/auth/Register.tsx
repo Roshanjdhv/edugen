@@ -106,8 +106,8 @@ export default function Register() {
                                     type="button"
                                     onClick={() => setRole('student')}
                                     className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${role === 'student'
-                                            ? 'bg-blue-600 text-white shadow-sm'
-                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                         }`}
                                 >
                                     Student
@@ -116,21 +116,11 @@ export default function Register() {
                                     type="button"
                                     onClick={() => setRole('teacher')}
                                     className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${role === 'teacher'
-                                            ? 'bg-blue-600 text-white shadow-sm'
-                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                         }`}
                                 >
                                     Teacher
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setRole('admin')}
-                                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${role === 'admin'
-                                            ? 'bg-blue-600 text-white shadow-sm'
-                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                                        }`}
-                                >
-                                    Admin
                                 </button>
                             </div>
                         </div>

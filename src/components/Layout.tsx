@@ -19,7 +19,7 @@ export default function Layout() {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
-        await profile; // Placeholder to avoid unused profile if needed, but signOut is used
+        sessionStorage.removeItem('admin_auth');
         await signOut();
         navigate('/login');
     };
@@ -59,22 +59,24 @@ export default function Layout() {
 
                     {/* Navigation Section */}
                     <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
-                        <NavLink
-                            to={isAdmin ? "/admin" : isTeacher ? "/teacher" : "/student"}
-                            onClick={closeSidebar}
-                            end
-                            className={({ isActive }) =>
-                                cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                                    isActive
-                                        ? "bg-blue-600 text-white shadow-md font-medium"
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                )
-                            }
-                        >
-                            <LayoutDashboard className="w-5 h-5" />
-                            <span>Dashboard</span>
-                        </NavLink>
+                        {!isAdmin && (
+                            <NavLink
+                                to={isTeacher ? "/teacher" : "/student"}
+                                onClick={closeSidebar}
+                                end
+                                className={({ isActive }) =>
+                                    cn(
+                                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                        isActive
+                                            ? "bg-blue-600 text-white shadow-md font-medium"
+                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                    )
+                                }
+                            >
+                                <LayoutDashboard className="w-5 h-5" />
+                                <span>Dashboard</span>
+                            </NavLink>
+                        )}
 
                         {!isAdmin && (
                             <NavLink

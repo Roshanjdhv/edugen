@@ -10,6 +10,14 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     const { user, profile, loading } = useAuth();
     const location = useLocation();
 
+    if (allowedRoles?.includes('admin')) {
+        const isAdminAuth = sessionStorage.getItem('admin_auth') === 'true';
+        if (!isAdminAuth) {
+            return <Navigate to="/admin/login" state={{ from: location }} replace />;
+        }
+        return <Outlet />;
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">

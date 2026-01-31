@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Users, BookOpen, UserCheck, Shield } from 'lucide-react';
+import { Users, UserCheck, Shield, Trash2, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({
         activeTeachers: 0,
         activeStudents: 0,
-        totalClassrooms: 0
+        totalClassrooms: 0,
+        totalUsers: 0
     });
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchStats();
@@ -18,16 +21,16 @@ export default function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            // Mock stats or efficient counts if possible
-            // Supabase count is easy
             const { count: teachers } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher');
             const { count: students } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
             const { count: classrooms } = await supabase.from('classrooms').select('*', { count: 'exact', head: true });
+            const { count: total } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
 
             setStats({
                 activeTeachers: teachers || 0,
                 activeStudents: students || 0,
-                totalClassrooms: classrooms || 0
+                totalClassrooms: classrooms || 0,
+                totalUsers: total || 0
             });
         } catch (e) {
             console.error(e);
@@ -36,7 +39,8 @@ export default function AdminDashboard() {
 
     const fetchUsers = async () => {
         try {
-            const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(20);
+            setLoading(true);
+            const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
             if (!error) setUsers(data || []);
         } catch (e) {
             console.error(e);
@@ -45,83 +49,152 @@ export default function AdminDashboard() {
         }
     }
 
+    const handleDeleteUser = async (userId: string, name: string) => {
+        if (!confirm(`Are you sure you want to permanently delete the account for ${name}? This action cannot be undone.`)) return;
+
+        setDeletingId(userId);
+        try {
+            const { error } = await supabase.from('profiles').delete().eq('id', userId);
+
+            if (error) throw error;
+
+            toast.success(`${name}'s account has been removed`);
+            fetchUsers();
+            fetchStats();
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to delete user');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
+        <div className="space-y-8 p-6 lg:p-10 bg-slate-50/50 min-h-screen">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Admin Dashboard</h1>
-                    <p className="text-slate-500">System overview and user management</p>
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight">System Control</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">Global User & Analytics Management</p>
+                </div>
+                <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-sm font-black text-slate-900 uppercase">System Online</span>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                    <div className="p-4 bg-blue-50 text-blue-600 rounded-lg">
-                        <Shield className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold text-slate-900">{stats.activeTeachers}</div>
-                        <div className="text-sm text-slate-500">Active Teachers</div>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                    <div className="p-4 bg-green-50 text-green-600 rounded-lg">
-                        <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold text-slate-900">{stats.activeStudents}</div>
-                        <div className="text-sm text-slate-500">Active Students</div>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                    <div className="p-4 bg-purple-50 text-purple-600 rounded-lg">
-                        <BookOpen className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <div className="text-2xl font-bold text-slate-900">{stats.totalClassrooms}</div>
-                        <div className="text-sm text-slate-500">Total Classrooms</div>
-                    </div>
-                </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    label="Total Students"
+                    value={stats.activeStudents}
+                    icon={Users}
+                    color="blue"
+                    description="Successfully enrolled students"
+                />
+                <StatCard
+                    label="Total Teachers"
+                    value={stats.activeTeachers}
+                    icon={Shield}
+                    color="purple"
+                    description="Verified educators"
+                />
+                <StatCard
+                    label="Total Population"
+                    value={stats.totalUsers}
+                    icon={UserCheck}
+                    color="indigo"
+                    description="Combined user base"
+                />
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-100">
-                    <h2 className="text-lg font-bold text-slate-900">Recent Users</h2>
+            {/* Users Table */}
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900">User Registry</h2>
+                        <p className="text-slate-400 text-sm font-medium">Full list of all registered accounts in the system</p>
+                    </div>
+                    <div className="relative group">
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            className="bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-2.5 text-sm outline-none focus:border-blue-500 focus:bg-white transition-all w-full md:w-64"
+                        />
+                    </div>
                 </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-600">
-                        <thead className="bg-slate-50 text-slate-700 font-semibold">
-                            <tr>
-                                <th className="px-6 py-4">Name</th>
-                                <th className="px-6 py-4">Role</th>
-                                <th className="px-6 py-4">Email</th>
-                                <th className="px-6 py-4">Date Joined</th>
-                                <th className="px-6 py-4">Status</th>
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="bg-slate-50/50">
+                                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">User Profile</th>
+                                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Access Level</th>
+                                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Email Address</th>
+                                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Join Date</th>
+                                <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-6 py-8 text-center">Loading users...</td></tr>
+                                <tr>
+                                    <td colSpan={5} className="px-8 py-12 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                                            <span className="text-slate-400 font-bold uppercase tracking-widest text-xs">Accessing Records...</span>
+                                        </div>
+                                    </td>
+                                </tr>
                             ) : users.length === 0 ? (
-                                <tr><td colSpan={5} className="px-6 py-8 text-center">No users found.</td></tr>
+                                <tr>
+                                    <td colSpan={5} className="px-8 py-12 text-center">
+                                        <div className="flex flex-col items-center gap-3 text-slate-300">
+                                            <AlertCircle className="w-12 h-12" />
+                                            <span className="font-bold uppercase tracking-widest text-sm">No Users Found</span>
+                                        </div>
+                                    </td>
+                                </tr>
                             ) : (
                                 users.map(user => (
-                                    <tr key={user.id} className="hover:bg-slate-50/50">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{user.full_name}</td>
-                                        <td className="px-6 py-4 capitalize">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.role === 'teacher' ? 'bg-blue-100 text-blue-700' :
-                                                user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                                                    'bg-slate-100 text-slate-700'
+                                    <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500 text-lg uppercase transition-transform group-hover:scale-110">
+                                                    {user.full_name?.[0] || '?'}
+                                                </div>
+                                                <span className="font-black text-slate-900">{user.full_name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center w-fit gap-2 ${user.role === 'teacher' ? 'bg-purple-50 text-purple-600' :
+                                                user.role === 'admin' ? 'bg-red-50 text-red-600' :
+                                                    'bg-blue-50 text-blue-600'
                                                 }`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full ${user.role === 'teacher' ? 'bg-purple-600' :
+                                                    user.role === 'admin' ? 'bg-red-600' :
+                                                        'bg-blue-600'
+                                                    }`} />
                                                 {user.role}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">{user.email}</td>
-                                        <td className="px-6 py-4">{new Date(user.created_at).toLocaleDateString()}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-green-600 flex items-center gap-1">
-                                                <UserCheck className="w-3 h-3" /> Active
-                                            </span>
+                                        <td className="px-8 py-5 font-bold text-slate-500">{user.email}</td>
+                                        <td className="px-8 py-5 font-bold text-slate-400 text-sm">
+                                            {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                        </td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex justify-center">
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id, user.full_name)}
+                                                    disabled={deletingId === user.id}
+                                                    className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all disabled:opacity-50"
+                                                    title="Permanently Remove Account"
+                                                >
+                                                    {deletingId === user.id ? (
+                                                        <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Trash2 className="w-5 h-5" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -129,6 +202,28 @@ export default function AdminDashboard() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function StatCard({ label, value, icon: Icon, color, description }: any) {
+    const colorMap: any = {
+        blue: 'text-blue-600 bg-blue-50',
+        purple: 'text-purple-600 bg-purple-50',
+        cyan: 'text-cyan-600 bg-cyan-50',
+        indigo: 'text-indigo-600 bg-indigo-50'
+    };
+
+    return (
+        <div className="bg-white p-8 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col gap-4 group hover:-translate-y-1 transition-all duration-300">
+            <div className={`p-4 rounded-2xl w-fit ${colorMap[color] || colorMap.blue}`}>
+                <Icon className="w-8 h-8" />
+            </div>
+            <div>
+                <div className="text-4xl font-black text-slate-900 tracking-tight mb-1">{value.toLocaleString()}</div>
+                <div className="text-sm font-black text-slate-900 uppercase tracking-widest">{label}</div>
+                <p className="text-xs text-slate-400 font-medium mt-2">{description}</p>
             </div>
         </div>
     );
