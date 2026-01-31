@@ -254,3 +254,53 @@ create policy "Students can view own answers"
     )
   );
 
+-- STUDENT INTERACTIONS (For Heatmap/Activity)
+create table public.student_interactions (
+  id uuid default uuid_generate_v4() primary key,
+  student_id uuid references public.profiles(id) on delete cascade not null,
+  interaction_type text not null, -- 'login', 'quiz_start', 'material_view', etc.
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.student_interactions enable row level security;
+
+create policy "Users can view own interactions"
+  on student_interactions for select
+  using ( student_id = auth.uid() );
+
+create policy "Teachers can view interactions of their students"
+  on student_interactions for select
+  using (
+    exists (
+      select 1 from classroom_students
+      join classrooms on classrooms.id = classroom_students.classroom_id
+      where classroom_students.student_id = student_interactions.student_id
+      and classrooms.created_by = auth.uid()
+    )
+  );
+
+-- EXIT TICKETS (For Sentiment Analysis)
+create table public.exit_tickets (
+  id uuid default uuid_generate_v4() primary key,
+  classroom_id uuid references public.classrooms(id) on delete cascade not null,
+  student_id uuid references public.profiles(id) on delete cascade not null,
+  sentiment text check (sentiment in ('happy', 'neutral', 'sad')) not null,
+  feedback text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.exit_tickets enable row level security;
+
+create policy "Students can insert exit tickets"
+  on exit_tickets for insert
+  with check ( student_id = auth.uid() );
+
+create policy "Teachers can view exit tickets for their classrooms"
+  on exit_tickets for select
+  using (
+    exists (
+      select 1 from classrooms
+      where classrooms.id = exit_tickets.classroom_id
+      and classrooms.created_by = auth.uid()
+    )
+  );

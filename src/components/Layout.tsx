@@ -9,7 +9,9 @@ import {
     FileText,
     TrendingUp,
     Settings,
-    UserCircle
+    UserCircle,
+    ClipboardCheck,
+    HelpCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -76,22 +78,69 @@ export default function Layout() {
                             <span>Dashboard</span>
                         </NavLink>
 
-                        {!isAdmin && (
-                            <NavLink
-                                to={isTeacher ? "/teacher/classrooms" : "/student/classrooms"}
-                                onClick={closeSidebar}
-                                className={({ isActive }) =>
-                                    cn(
-                                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
-                                        isActive
-                                            ? "bg-blue-600 text-white shadow-md font-medium"
-                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                    )
-                                }
-                            >
-                                <BookOpen className="w-5 h-5" />
-                                <span>Courses</span>
-                            </NavLink>
+                        {isTeacher && (
+                            <>
+                                <NavLink
+                                    to="/teacher/classrooms"
+                                    onClick={closeSidebar}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-md font-medium"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        )
+                                    }
+                                >
+                                    <BookOpen className="w-5 h-5" />
+                                    <span>My Classes</span>
+                                </NavLink>
+                                <NavLink
+                                    to="/teacher/assignments"
+                                    onClick={closeSidebar}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-md font-medium"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        )
+                                    }
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    <span>Assignments</span>
+                                </NavLink>
+                                <NavLink
+                                    to="/teacher/grading"
+                                    onClick={closeSidebar}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-md font-medium"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        )
+                                    }
+                                >
+                                    <ClipboardCheck className="w-5 h-5" />
+                                    <span>Grading</span>
+                                </NavLink>
+                                <NavLink
+                                    to="/teacher/analytics"
+                                    onClick={closeSidebar}
+                                    className={({ isActive }) =>
+                                        cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-md font-medium"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        )
+                                    }
+                                >
+                                    <TrendingUp className="w-5 h-5" />
+                                    <span>Student Analytics</span>
+                                </NavLink>
+                            </>
                         )}
 
                         {isStudent && (
@@ -131,45 +180,64 @@ export default function Layout() {
                     </nav>
 
                     {/* Bottom Section - Profile & Logout */}
-                    <div className="p-4 border-t border-slate-100 space-y-2">
+                    <div className="p-4 border-t border-slate-100 space-y-1">
                         <NavLink
                             to="/settings"
                             onClick={closeSidebar}
                             className={({ isActive }) =>
                                 cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                                    "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm",
                                     isActive
-                                        ? "bg-blue-600 text-white shadow-md font-medium"
+                                        ? "bg-slate-100 text-slate-900 font-medium"
                                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                 )
                             }
                         >
-                            <Settings className="w-5 h-5" />
+                            <Settings className="w-4 h-4" />
                             <span>Settings</span>
                         </NavLink>
 
+                        <NavLink
+                            to="/help"
+                            onClick={closeSidebar}
+                            className={({ isActive }) =>
+                                cn(
+                                    "flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-sm",
+                                    isActive
+                                        ? "bg-slate-100 text-slate-900 font-medium"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                )
+                            }
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>Help Center</span>
+                        </NavLink>
+
                         {/* User Profile Info */}
-                        <div className="flex items-center gap-3 px-4 py-3 mt-2 border-t border-slate-50">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <UserCircle className="w-6 h-6 text-blue-600" />
+                        <div className="flex items-center gap-3 px-3 py-3 mt-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden border border-slate-200">
+                                {profile?.avatar_url ? (
+                                    <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserCircle className="w-6 h-6 text-slate-400" />
+                                )}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-bold text-slate-900 truncate">
-                                    {profile?.full_name || 'User'}
+                                    {profile?.full_name || 'Dr. Sarah Jenkins'}
                                 </div>
-                                <div className="text-xs text-slate-500 truncate capitalize text-ellipsis">
-                                    {isStudent ? `Student ID: #${profile?.id?.slice(0, 4) || '8821'}` : profile?.role}
+                                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 truncate">
+                                    {profile?.role === 'teacher' ? 'Senior Professor' : profile?.role || 'Member'}
                                 </div>
                             </div>
+                            <button
+                                onClick={handleLogout}
+                                className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                                title="Logout"
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </button>
                         </div>
-
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-all text-left"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="font-medium">Logout</span>
-                        </button>
                     </div>
                 </div>
             </aside>

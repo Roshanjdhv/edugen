@@ -15,6 +15,7 @@ import AdminDashboard from './pages/admin/Dashboard';
 import StudentClassroomView from './pages/student/ClassroomView';
 import TakeQuiz from './pages/student/TakeQuiz';
 import LandingPage from './pages/LandingPage';
+import StudentAnalytics from './pages/teacher/StudentAnalytics';
 
 
 
@@ -50,6 +51,7 @@ function App() {
                 <Route path="/teacher" element={<TeacherDashboard />} />
                 <Route path="/teacher/classrooms/create" element={<CreateClassroom />} />
                 <Route path="/teacher/classrooms/:id" element={<ClassroomDetails />} />
+                <Route path="/teacher/analytics" element={<StudentAnalytics />} />
                 <Route path="/teacher/announcements" element={<div>Manage Announcements</div>} />
               </Route>
 
