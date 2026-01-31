@@ -6,6 +6,7 @@ import Register from './pages/auth/Register';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import StudentDashboard from './pages/student/Dashboard';
+import StudentProgress from './pages/student/Progress';
 import StudentClassrooms from './pages/student/Classrooms';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import CreateClassroom from './pages/teacher/CreateClassroom';
@@ -39,6 +40,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={['student']} />}>
                 <Route path="/student" element={<StudentDashboard />} />
                 <Route path="/student/classrooms" element={<StudentClassrooms />} />
+                <Route path="/student/progress" element={<StudentProgress />} />
                 <Route path="/student/classrooms/:id" element={<StudentClassroomView />} />
                 <Route path="/student/quizzes/:id" element={<TakeQuiz />} />
               </Route>

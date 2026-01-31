@@ -1,18 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BookOpen, Users, Building2, GraduationCap, Target, CheckCircle2, Play, Facebook, Twitter, Linkedin } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
 
 export default function LandingPage() {
-    const { user, profile } = useAuth();
-    const navigate = useNavigate();
-
-    const getDashboardPath = () => {
-        if (!profile) return '/student';
-        if (profile.role === 'teacher') return '/teacher';
-        if (profile.role === 'admin') return '/admin';
-        return '/student';
-    };
-
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             {/* Header */}
@@ -43,29 +32,18 @@ export default function LandingPage() {
 
                         {/* CTA Buttons */}
                         <div className="flex items-center space-x-4">
-                            {user ? (
-                                <button
-                                    onClick={() => navigate(getDashboardPath())}
-                                    className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
-                                >
-                                    Go to Dashboard
-                                </button>
-                            ) : (
-                                <>
-                                    <Link
-                                        to="/register"
-                                        className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
-                                    >
-                                        Get Started
-                                    </Link>
-                                    <Link
-                                        to="/login"
-                                        className="px-5 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:border-blue-600 hover:text-blue-600 transition-all"
-                                    >
-                                        Login
-                                    </Link>
-                                </>
-                            )}
+                            <Link
+                                to="/register"
+                                className="px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
+                            >
+                                Get Started
+                            </Link>
+                            <Link
+                                to="/login"
+                                className="px-5 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:border-blue-600 hover:text-blue-600 transition-all"
+                            >
+                                Login
+                            </Link>
                         </div>
                     </div>
                 </div>
