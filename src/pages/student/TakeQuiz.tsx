@@ -99,13 +99,16 @@ export default function TakeQuiz() {
             });
 
             // 1. Create Attempt
+            const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
+
             const { data: attempt, error: attemptError } = await supabase
                 .from('quiz_attempts')
                 .insert({
                     quiz_id: id,
                     student_id: user?.id,
                     score: score,
-                    completed_at: new Promise(resolve => resolve(new Date().toISOString())) // Fix for TS type if needed, but standard ISO works
+                    percentage: percentage,
+                    completed_at: new Date().toISOString()
                 })
                 .select()
                 .single();

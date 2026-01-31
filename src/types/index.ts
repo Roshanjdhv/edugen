@@ -30,3 +30,15 @@ export interface Quiz {
     is_published: boolean;
     created_at: string;
 }
+
+export interface Announcement {
+    id: string;
+    title: string;
+    content: string;
+    classroom_id: string;
+    created_at: string;
+    created_by: string;
+    profiles?: {
+        full_name: string;
+    }
+}

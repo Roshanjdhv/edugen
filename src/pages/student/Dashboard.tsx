@@ -13,6 +13,7 @@ export default function StudentDashboard() {
         averageScore: 85, // Mock data
     });
     const [loading, setLoading] = useState(true);
+    const [recentAnnouncements, setRecentAnnouncements] = useState<any[]>([]);
 
     useEffect(() => {
         async function fetchStats() {
@@ -26,8 +27,26 @@ export default function StudentDashboard() {
                 if (!error) {
                     setStats(prev => ({ ...prev, enrolledCourses: count || 0 }));
                 }
+
+                // Fetch recent announcements from student's classrooms
+                const { data: classrooms } = await supabase
+                    .from('classroom_students')
+                    .select('classroom_id')
+                    .eq('student_id', user.id);
+
+                if (classrooms && classrooms.length > 0) {
+                    const roomIds = classrooms.map(c => c.classroom_id);
+                    const { data: announcements } = await supabase
+                        .from('announcements')
+                        .select('*, classrooms(name), profiles(full_name)')
+                        .in('classroom_id', roomIds)
+                        .order('created_at', { ascending: false })
+                        .limit(3);
+
+                    if (announcements) setRecentAnnouncements(announcements);
+                }
             } catch (error) {
-                console.error('Error fetching stats:', error);
+                console.error('Error fetching dashboard data:', error);
             } finally {
                 setLoading(false);
             }
@@ -85,8 +104,38 @@ export default function StudentDashboard() {
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <h2 className="text-lg font-semibold mb-4">Recent Announcements</h2>
-                    <p className="text-slate-500 text-sm">No new announcements.</p>
+                    <h2 className="text-lg font-semibold mb-4 text-slate-900 font-black uppercase tracking-widest">Recent Announcements</h2>
+                    <div className="space-y-4">
+                        {recentAnnouncements.length === 0 ? (
+                            <p className="text-slate-500 text-sm italic">No new announcements.</p>
+                        ) : (
+                            recentAnnouncements.map(a => (
+                                <Link
+                                    key={a.id}
+                                    to={`/student/classrooms/${a.classroom_id}`}
+                                    className="block p-4 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-100 transition-all group"
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">{a.title}</h3>
+                                        <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-slate-100 text-slate-400 font-bold">
+                                            {new Date(a.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 line-clamp-2 mb-2">{a.content}</p>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        <span className="text-blue-600">{a.classrooms?.name}</span>
+                                        <span>•</span>
+                                        <span>{a.profiles?.full_name}</span>
+                                    </div>
+                                </Link>
+                            ))
+                        )}
+                        {recentAnnouncements.length > 0 && (
+                            <Link to="/student/classrooms" className="block text-center text-sm font-bold text-blue-600 hover:underline pt-2">
+                                View All Announcements &rarr;
+                            </Link>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
